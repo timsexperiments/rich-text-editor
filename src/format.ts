@@ -9,7 +9,10 @@ export function applyStyle(styleType: FormatStyle) {
   const range = selection.getRangeAt(0);
   const styleTags = getStyleElementTags(styleType);
   if (range.collapsed) {
-    // Handling cursor position (no selection) logic can be added here for future needs
+    const newElement = createElementTree(styleTags);
+    if (newElement) {
+      insertEmptyStyledElementAtCursor(range, newElement);
+    }
   } else {
     const selectionNode = range.startContainer.childNodes[range.startOffset];
     const nodeWrapper = checkNestedTags(selectionNode, styleTags);
@@ -25,6 +28,29 @@ export function applyStyle(styleType: FormatStyle) {
   }
 
   updateHTMLOutput();
+}
+
+function insertEmptyStyledElementAtCursor(range: Range, element: HTMLElement) {
+  // Clear the contents of the element to ensure it's empty
+  element.textContent = '';
+
+  // Insert the empty styled element at the cursor position
+  range.insertNode(element);
+
+  // Create a new range to select the inserted element
+  const newRange = document.createRange();
+
+  // Set the start and end of the range to be inside the empty element
+  newRange.setStart(element, 0);
+  newRange.setEnd(element, 0);
+
+  // Update the selection to the new range
+  const selection = window.getSelection();
+  selection?.removeAllRanges();
+  selection?.addRange(newRange);
+
+  element.appendChild(document.createTextNode('\u200B'));
+  element.focus();
 }
 
 function wrapTextWithElement(range: Range, element: HTMLElement) {
